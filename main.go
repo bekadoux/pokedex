@@ -1,9 +1,7 @@
 package main
 
-import (
-	"fmt"
-)
+import "github.com/bekadoux/pokedex/repl"
 
 func main() {
-	fmt.Println("Hello World!")
+	repl.StartREPL()
 }
