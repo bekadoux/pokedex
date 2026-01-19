@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
+
+	"github.com/bekadoux/pokedex/internal/pokeapi"
 )
 
 func cleanInput(text string) []string {
@@ -16,6 +19,10 @@ func cleanInput(text string) []string {
 
 func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
+	cfg := &config{
+		client: pokeapi.NewClient(10 * time.Second),
+	}
+
 	for {
 		fmt.Print("Pokedex > ")
 		scanner.Scan()
@@ -34,7 +41,7 @@ func StartREPL() {
 			continue
 		}
 
-		if err := calledCmd.callback(); err != nil {
+		if err := calledCmd.callback(cfg); err != nil {
 			err = fmt.Errorf("command failed: %w", err)
 			fmt.Println(err)
 			continue
