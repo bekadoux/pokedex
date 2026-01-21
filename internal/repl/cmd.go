@@ -9,7 +9,9 @@ import (
 type cmd struct {
 	name        string
 	description string
-	callback    func(*config) error
+	minArgs     int
+	maxArgs     int
+	callback    func(*config, []string) error
 }
 
 type config struct {
@@ -25,22 +27,38 @@ func init() {
 		"exit": {
 			name:        "exit",
 			description: "Exit the Pokedex",
-			callback:    cmdExit,
+			minArgs:     0,
+			maxArgs:     0,
+			callback: func(cfg *config, args []string) error {
+				return cmdExit(cfg)
+			},
 		},
 		"help": {
 			name:        "help",
 			description: "Displays a help message",
-			callback:    cmdHelp,
+			minArgs:     0,
+			maxArgs:     0,
+			callback: func(cfg *config, args []string) error {
+				return cmdHelp(cfg)
+			},
 		},
 		"map": {
 			name:        "map",
 			description: "Displays 20 location areas in the Pokemon world (each subsequent call displays the next 20 locations)",
-			callback:    cmdMapFwd,
+			minArgs:     0,
+			maxArgs:     0,
+			callback: func(cfg *config, args []string) error {
+				return cmdMapFwd(cfg)
+			},
 		},
 		"mapb": {
 			name:        "mapb",
 			description: "Return to previous map page",
-			callback:    cmdMapBack,
+			minArgs:     0,
+			maxArgs:     0,
+			callback: func(cfg *config, args []string) error {
+				return cmdMapBack(cfg)
+			},
 		},
 	}
 }
@@ -96,3 +114,7 @@ func cmdMapBack(cfg *config) error {
 
 	return nil
 }
+
+// func cmdExplore(cfg *config, args []string) {
+//
+// }

@@ -2,6 +2,7 @@ package repl
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -17,6 +18,29 @@ func cleanInput(text string) []string {
 	return clean
 }
 
+func dispatch(cfg *config, input []string) error {
+	if len(input) == 0 {
+		return errors.New("empty input")
+	}
+
+	cmdName := input[0]
+	args := input[1:]
+
+	calledCmd, ok := cmdRegistry[cmdName]
+	if !ok {
+		return fmt.Errorf("unknown command: '%s'", cmdName)
+	}
+
+	if len(args) < calledCmd.minArgs || len(args) > calledCmd.maxArgs {
+		if calledCmd.minArgs == calledCmd.maxArgs {
+			return fmt.Errorf("%s expects %d arguments, got %d", cmdName, calledCmd.minArgs, len(args))
+		}
+		return fmt.Errorf("%s expects between %d and %d arguments, got %d", cmdName, calledCmd.minArgs, calledCmd.maxArgs, len(args))
+	}
+
+	return calledCmd.callback(cfg, args)
+}
+
 func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	cfg := &config{
@@ -30,21 +54,10 @@ func StartREPL() {
 		input := scanner.Text()
 		clean := cleanInput(input)
 
-		if len(clean) == 0 {
-			continue
-		}
-
-		cmdName := clean[0]
-		calledCmd, ok := cmdRegistry[cmdName]
-		if !ok {
-			fmt.Printf("Unknown command: '%s'\n", clean[0])
-			continue
-		}
-
-		if err := calledCmd.callback(cfg); err != nil {
-			err = fmt.Errorf("command failed: %w", err)
+		err := dispatch(cfg, clean)
+		if err != nil {
+			fmt.Printf("Command error: ")
 			fmt.Println(err)
-			continue
 		}
 	}
 }
