@@ -30,7 +30,7 @@ func init() {
 			minArgs:     0,
 			maxArgs:     0,
 			callback: func(cfg *config, args []string) error {
-				return cmdExit(cfg)
+				return cmdExit()
 			},
 		},
 		"help": {
@@ -39,7 +39,7 @@ func init() {
 			minArgs:     0,
 			maxArgs:     0,
 			callback: func(cfg *config, args []string) error {
-				return cmdHelp(cfg)
+				return cmdHelp()
 			},
 		},
 		"map": {
@@ -60,16 +60,25 @@ func init() {
 				return cmdMapBack(cfg)
 			},
 		},
+		"explore": {
+			name:        "explore",
+			description: "Explore location area",
+			minArgs:     1,
+			maxArgs:     1,
+			callback: func(cfg *config, args []string) error {
+				return cmdExplore(cfg, args)
+			},
+		},
 	}
 }
 
-func cmdExit(cfg *config) error {
+func cmdExit() error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
-func cmdHelp(cfg *config) error {
+func cmdHelp() error {
 	fmt.Printf("Welcome to the Pokedex!\nUsage:\n\n")
 
 	for k, v := range cmdRegistry {
@@ -115,6 +124,20 @@ func cmdMapBack(cfg *config) error {
 	return nil
 }
 
-// func cmdExplore(cfg *config, args []string) {
-//
-// }
+func cmdExplore(cfg *config, args []string) error {
+	location := args[0]
+	response, err := cfg.client.GetLocationDetails(args[0])
+	if err != nil {
+		return fmt.Errorf("error getting location areas: %w", err)
+	}
+
+	fmt.Printf("Exploring %s...\n", location)
+	if len(response.PokemonEncounters) > 0 {
+		fmt.Println("Found Pokemon:")
+	}
+	for _, encounter := range response.PokemonEncounters {
+		fmt.Printf("- %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
+}

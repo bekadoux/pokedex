@@ -11,6 +11,27 @@ import (
 	"github.com/bekadoux/pokedex/internal/pokeapi"
 )
 
+func StartREPL() {
+	scanner := bufio.NewScanner(os.Stdin)
+	cfg := &config{
+		client: pokeapi.NewClient(10 * time.Second),
+	}
+
+	for {
+		fmt.Print("Pokedex > ")
+		scanner.Scan()
+
+		input := scanner.Text()
+		clean := cleanInput(input)
+
+		err := dispatch(cfg, clean)
+		if err != nil {
+			fmt.Printf("Error: ")
+			fmt.Println(err)
+		}
+	}
+}
+
 func cleanInput(text string) []string {
 	lowercase := strings.ToLower(text)
 	clean := strings.Fields(lowercase)
@@ -33,31 +54,10 @@ func dispatch(cfg *config, input []string) error {
 
 	if len(args) < calledCmd.minArgs || len(args) > calledCmd.maxArgs {
 		if calledCmd.minArgs == calledCmd.maxArgs {
-			return fmt.Errorf("%s expects %d arguments, got %d", cmdName, calledCmd.minArgs, len(args))
+			return fmt.Errorf("%s expects exactly %d arguments, got %d", cmdName, calledCmd.minArgs, len(args))
 		}
 		return fmt.Errorf("%s expects between %d and %d arguments, got %d", cmdName, calledCmd.minArgs, calledCmd.maxArgs, len(args))
 	}
 
 	return calledCmd.callback(cfg, args)
-}
-
-func StartREPL() {
-	scanner := bufio.NewScanner(os.Stdin)
-	cfg := &config{
-		client: pokeapi.NewClient(10 * time.Second),
-	}
-
-	for {
-		fmt.Print("Pokedex > ")
-		scanner.Scan()
-
-		input := scanner.Text()
-		clean := cleanInput(input)
-
-		err := dispatch(cfg, clean)
-		if err != nil {
-			fmt.Printf("Command error: ")
-			fmt.Println(err)
-		}
-	}
 }
