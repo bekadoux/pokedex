@@ -2,7 +2,6 @@ package pokeapi
 
 import (
 	"errors"
-	"fmt"
 	"math/rand"
 )
 
@@ -10,28 +9,28 @@ var ErrAddDuplicatePokemon = errors.New("pokemon already present in pokedex")
 var ErrGetAbsentPokemon = errors.New("pokemon is not in pokedex")
 
 type Pokedex struct {
-	CaughtPokemon map[string]Pokemon
+	caughtPokemon map[string]Pokemon
 }
 
 func NewPokedex() Pokedex {
 	return Pokedex{
-		CaughtPokemon: make(map[string]Pokemon),
+		caughtPokemon: make(map[string]Pokemon),
 	}
 }
 
 func (p *Pokedex) AddPokemon(pokemon Pokemon) error {
-	_, ok := p.CaughtPokemon[pokemon.Name]
+	_, ok := p.caughtPokemon[pokemon.Name]
 	if ok {
 		return ErrAddDuplicatePokemon
 	}
 
-	p.CaughtPokemon[pokemon.Name] = pokemon
+	p.caughtPokemon[pokemon.Name] = pokemon
 
 	return nil
 }
 
 func (p *Pokedex) GetPokemon(name string) (Pokemon, error) {
-	pokemon, ok := p.CaughtPokemon[name]
+	pokemon, ok := p.caughtPokemon[name]
 	if !ok {
 		return Pokemon{}, ErrGetAbsentPokemon
 	}
@@ -39,9 +38,17 @@ func (p *Pokedex) GetPokemon(name string) (Pokemon, error) {
 	return pokemon, nil
 }
 
+func (p *Pokedex) GetAllPokemon() []Pokemon {
+	allPokemon := []Pokemon{}
+	for _, p := range p.caughtPokemon {
+		allPokemon = append(allPokemon, p)
+	}
+
+	return allPokemon
+}
+
 func AttemptCatchPokemon(baseExp, maxBaseExp int, minChance, maxChance float64) bool {
 	chance := catchChance(baseExp, maxBaseExp, minChance, maxChance)
-	fmt.Println(chance)
 	return rand.Float64() <= chance
 }
 
