@@ -1,9 +1,11 @@
 package repl
 
 import (
+	"errors"
 	"fmt"
-	"github.com/bekadoux/pokedex/internal/pokeapi"
 	"os"
+
+	"github.com/bekadoux/pokedex/internal/pokeapi"
 )
 
 type cmd struct {
@@ -26,7 +28,7 @@ func init() {
 	cmdRegistry = map[string]cmd{
 		"exit": {
 			name:        "exit",
-			description: "Exit the Pokedex",
+			description: "Exit the Pokédex",
 			minArgs:     0,
 			maxArgs:     0,
 			callback: func(cfg *config, args []string) error {
@@ -44,7 +46,7 @@ func init() {
 		},
 		"map": {
 			name:        "map",
-			description: "Displays 20 location areas in the Pokemon world (each subsequent call displays the next 20 locations)",
+			description: "Displays 20 location areas in the Pokémon world (each subsequent call displays the next 20 locations)",
 			minArgs:     0,
 			maxArgs:     0,
 			callback: func(cfg *config, args []string) error {
@@ -67,6 +69,15 @@ func init() {
 			maxArgs:     1,
 			callback: func(cfg *config, args []string) error {
 				return cmdExplore(cfg, args)
+			},
+		},
+		"catch": {
+			name:        "catch",
+			description: "Catch a Pokémon!",
+			minArgs:     1,
+			maxArgs:     1,
+			callback: func(cfg *config, args []string) error {
+				return cmdCatch(cfg, args)
 			},
 		},
 	}
@@ -137,6 +148,35 @@ func cmdExplore(cfg *config, args []string) error {
 	}
 	for _, encounter := range response.PokemonEncounters {
 		fmt.Printf("- %s\n", encounter.Pokemon.Name)
+	}
+
+	return nil
+}
+
+func cmdCatch(cfg *config, args []string) error {
+	name := args[0]
+	response, err := cfg.client.GetPokemonDetails(name)
+	if err != nil {
+		return fmt.Errorf("error getting pokemon details: %w", err)
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s...\n", name)
+
+	// Max possible base_experience, set arbitrarily for simplicity
+	maxBaseExp := 350
+	catchSuccess := pokeapi.AttemptCatchPokemon(response.BaseExperience, maxBaseExp, 0.05, 0.95)
+	if catchSuccess {
+		pokemon := response.ToPokemon()
+		err = cfg.client.Pokedex.AddPokemon(pokemon)
+		if errors.Is(err, pokeapi.ErrAddDuplicatePokemon) {
+			fmt.Printf("You already have a %s!\n", name)
+		} else if err != nil {
+			return fmt.Errorf("error adding pokemon to pokedex: %s", err)
+		} else {
+			fmt.Printf("%s was caught!\n", name)
+		}
+	} else {
+		fmt.Printf("%s escaped!\n", name)
 	}
 
 	return nil

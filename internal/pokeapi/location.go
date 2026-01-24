@@ -8,23 +8,18 @@ import (
 	"net/http"
 )
 
-type Location struct {
-	Name string `json:"name"`
-	URL  string `json:"url"`
-}
-
 type LocationAreaResponse struct {
-	Count    int        `json:"count"`
-	Next     string     `json:"next"`
-	Previous string     `json:"previous"`
-	Results  []Location `json:"results"`
+	Results  []NamedAPIResource `json:"results"`
+	Next     string             `json:"next"`
+	Previous string             `json:"previous"`
+	Count    int                `json:"count"`
 }
 
 type LocationDetailsResponse struct {
 	EncounterMethodRates []EncounterMethodRate `json:"encounter_method_rates"`
 	GameIndex            int                   `json:"game_index"`
 	ID                   int                   `json:"id"`
-	Location             Location              `json:"location"`
+	Location             NamedAPIResource      `json:"location"`
 	Name                 string                `json:"name"`
 	Names                []struct {
 		Language struct {
@@ -42,8 +37,9 @@ func (c *Client) GetLocationAreas(pageURL string) (LocationAreaResponse, error) 
 		url = pageURL
 	}
 
+	var locResponse LocationAreaResponse
+
 	if data, ok := c.cache.Get(url); ok {
-		var locResponse LocationAreaResponse
 		err := json.Unmarshal(data, &locResponse)
 		if err != nil {
 			return LocationAreaResponse{}, fmt.Errorf("error during Unmarshal: %w", err)
@@ -73,7 +69,6 @@ func (c *Client) GetLocationAreas(pageURL string) (LocationAreaResponse, error) 
 	}
 	c.cache.Add(url, data)
 
-	var locResponse LocationAreaResponse
 	err = json.Unmarshal(data, &locResponse)
 	if err != nil {
 		return LocationAreaResponse{}, fmt.Errorf("error during Unmarshal: %w", err)
@@ -88,8 +83,9 @@ func (c *Client) GetLocationDetails(location string) (LocationDetailsResponse, e
 		return LocationDetailsResponse{}, errors.New("no location provided")
 	}
 
+	var locDetailsResponse LocationDetailsResponse
+
 	if data, ok := c.cache.Get(url); ok {
-		var locDetailsResponse LocationDetailsResponse
 		err := json.Unmarshal(data, &locDetailsResponse)
 		if err != nil {
 			return LocationDetailsResponse{}, fmt.Errorf("error during Unmarshal: %w", err)
@@ -110,7 +106,7 @@ func (c *Client) GetLocationDetails(location string) (LocationDetailsResponse, e
 	defer res.Body.Close()
 
 	if res.StatusCode == 404 {
-		return LocationDetailsResponse{}, fmt.Errorf("location not found")
+		return LocationDetailsResponse{}, fmt.Errorf("location not found: '%s'", location)
 	}
 	if res.StatusCode > 299 {
 		return LocationDetailsResponse{}, fmt.Errorf("response failed with status code: %d", res.StatusCode)
@@ -122,7 +118,6 @@ func (c *Client) GetLocationDetails(location string) (LocationDetailsResponse, e
 	}
 	c.cache.Add(url, data)
 
-	var locDetailsResponse LocationDetailsResponse
 	err = json.Unmarshal(data, &locDetailsResponse)
 	if err != nil {
 		return LocationDetailsResponse{}, fmt.Errorf("error during Unmarshal: %w", err)
