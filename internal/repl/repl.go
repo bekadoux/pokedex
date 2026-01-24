@@ -14,7 +14,8 @@ import (
 func StartREPL() {
 	scanner := bufio.NewScanner(os.Stdin)
 	cfg := &config{
-		client: pokeapi.NewClient(10 * time.Second),
+		client:  pokeapi.NewClient(10 * time.Second),
+		pokedex: pokeapi.NewPokedex(),
 	}
 
 	for {

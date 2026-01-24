@@ -7,6 +7,7 @@ import (
 )
 
 var ErrAddDuplicatePokemon = errors.New("pokemon already present in pokedex")
+var ErrGetAbsentPokemon = errors.New("pokemon is not in pokedex")
 
 type Pokedex struct {
 	CaughtPokemon map[string]Pokemon
@@ -27,6 +28,15 @@ func (p *Pokedex) AddPokemon(pokemon Pokemon) error {
 	p.CaughtPokemon[pokemon.Name] = pokemon
 
 	return nil
+}
+
+func (p *Pokedex) GetPokemon(name string) (Pokemon, error) {
+	pokemon, ok := p.CaughtPokemon[name]
+	if !ok {
+		return Pokemon{}, ErrGetAbsentPokemon
+	}
+
+	return pokemon, nil
 }
 
 func AttemptCatchPokemon(baseExp, maxBaseExp int, minChance, maxChance float64) bool {

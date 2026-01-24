@@ -17,8 +17,8 @@ type Pokemon struct {
 }
 
 type PokemonType struct {
-	TypeInfo NamedAPIResource `json:"type"`
-	Slot     int              `json:"slot"`
+	Type NamedAPIResource `json:"type"`
+	Slot int              `json:"slot"`
 }
 
 type PokemonTypePast struct {

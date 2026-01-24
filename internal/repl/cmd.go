@@ -18,6 +18,7 @@ type cmd struct {
 
 type config struct {
 	client              pokeapi.Client
+	pokedex             pokeapi.Pokedex
 	NextLocationURL     string
 	PreviousLocationURL string
 }
@@ -78,6 +79,15 @@ func init() {
 			maxArgs:     1,
 			callback: func(cfg *config, args []string) error {
 				return cmdCatch(cfg, args)
+			},
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "inspect a Pokémon in your Pokédex",
+			minArgs:     1,
+			maxArgs:     1,
+			callback: func(cfg *config, args []string) error {
+				return cmdInspect(cfg, args)
 			},
 		},
 	}
@@ -167,16 +177,40 @@ func cmdCatch(cfg *config, args []string) error {
 	catchSuccess := pokeapi.AttemptCatchPokemon(response.BaseExperience, maxBaseExp, 0.05, 0.95)
 	if catchSuccess {
 		pokemon := response.ToPokemon()
-		err = cfg.client.Pokedex.AddPokemon(pokemon)
+		err = cfg.pokedex.AddPokemon(pokemon)
 		if errors.Is(err, pokeapi.ErrAddDuplicatePokemon) {
 			fmt.Printf("You already have a %s!\n", name)
 		} else if err != nil {
-			return fmt.Errorf("error adding pokemon to pokedex: %s", err)
+			return fmt.Errorf("error adding pokemon '%s' to pokedex: %w", name, err)
 		} else {
 			fmt.Printf("%s was caught!\n", name)
 		}
 	} else {
 		fmt.Printf("%s escaped!\n", name)
+	}
+
+	return nil
+}
+
+func cmdInspect(cfg *config, args []string) error {
+	name := args[0]
+	pokemon, err := cfg.pokedex.GetPokemon(name)
+	if errors.Is(err, pokeapi.ErrGetAbsentPokemon) {
+		fmt.Printf("You haven't caught a %s yet!\n", name)
+		return nil
+	}
+	if err != nil {
+		return fmt.Errorf("error inspecting pokemon '%s': %w", name, err)
+	}
+
+	fmt.Printf("Name: %s\nHeight: %d\nWeight: %d\n", pokemon.Name, pokemon.Height, pokemon.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range pokemon.Stats {
+		fmt.Printf("\t- %s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, pType := range pokemon.Types {
+		fmt.Printf("\t- %s\n", pType.Type.Name)
 	}
 
 	return nil
