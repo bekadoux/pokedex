@@ -16,19 +16,13 @@ type LocationAreaResponse struct {
 }
 
 type LocationDetailsResponse struct {
+	Location             NamedAPIResource      `json:"location"`
+	Names                []Name                `json:"names"`
+	PokemonEncounters    []PokemonEncounter    `json:"pokemon_encounters"`
 	EncounterMethodRates []EncounterMethodRate `json:"encounter_method_rates"`
+	Name                 string                `json:"name"`
 	GameIndex            int                   `json:"game_index"`
 	ID                   int                   `json:"id"`
-	Location             NamedAPIResource      `json:"location"`
-	Name                 string                `json:"name"`
-	Names                []struct {
-		Language struct {
-			Name string `json:"name"`
-			URL  string `json:"url"`
-		} `json:"language"`
-		Name string `json:"name"`
-	} `json:"names"`
-	PokemonEncounters []PokemonEncounter `json:"pokemon_encounters"`
 }
 
 func (c *Client) GetLocationAreas(pageURL string) (LocationAreaResponse, error) {
